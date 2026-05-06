@@ -185,14 +185,27 @@ año_referencia = st.selectbox(
     index=0
 )
 
-# Filtrar por año
-conteo_año = conteo[conteo['AÑO'] == año_seleccionado].sort_values('SEMANA')
+# Determinar hasta qué semana mostrar (52 o 53)
+max_semana_posible = max(52, conteo['SEMANA'].max() if not conteo.empty else 52)
+
+# Crear DataFrame con todas las semanas para el año seleccionado
+df_todas_semanas = pd.DataFrame({'SEMANA': range(1, max_semana_posible + 1)})
+df_todas_semanas['AÑO'] = año_seleccionado
+
+# Extraer datos reales del año seleccionado
+datos_año = conteo[conteo['AÑO'] == año_seleccionado][['SEMANA', 'INSCRITOS']]
+
+# Unir (Left Join) para tener todas las semanas
+conteo_año = pd.merge(df_todas_semanas, datos_año, on='SEMANA', how='left')
+conteo_año['INSCRITOS'] = conteo_año['INSCRITOS'].fillna(0).astype(int)
+
+# Calcular FECHA_INICIO para todas las semanas
+conteo_año['FECHA_INICIO'] = conteo_año.apply(get_week_start, axis=1)
 
 # Tabla de datos
 st.subheader(f"📋 Detalle por Semana - {año_seleccionado}")
 
-# Agregar columna acumulado
-conteo_año = conteo[conteo['AÑO'] == año_seleccionado].sort_values('SEMANA').copy()
+# Acumulado año seleccionado
 conteo_año['ACUMULADO'] = conteo_año['INSCRITOS'].cumsum()
 
 # Agregar columna del año de referencia
@@ -200,10 +213,9 @@ conteo_ref = conteo[conteo['AÑO'] == año_referencia].set_index('SEMANA')['INSC
 conteo_año['AÑO_REFERENCIA'] = conteo_año['SEMANA'].map(conteo_ref).fillna(0).astype(int)
 
 # Calcular acumulado del año de referencia
-conteo_año['ACUM_REFERENCIA'] = conteo_año.apply(
-    lambda row: sum(conteo[(conteo['AÑO'] == año_referencia) & (conteo['SEMANA'] <= row['SEMANA'])]['INSCRITOS']),
-    axis=1
-)
+serie_ref = pd.Series(conteo_ref, dtype=float).reindex(range(1, max_semana_posible + 1), fill_value=0)
+acum_ref_dict = serie_ref.cumsum().to_dict()
+conteo_año['ACUM_REFERENCIA'] = conteo_año['SEMANA'].map(acum_ref_dict).astype(int)
 
 # Calcular variación porcentual del acumulado vs acumulado año de referencia
 def calc_variacion_acum(row):
