@@ -22,13 +22,10 @@ st.title("🎓 Sistema de Análisis de Inscripciones")
 st.markdown("---")
 
 @st.cache_data
-def cargar_y_validar_datos():
+def cargar_y_validar_datos(file_fechas, file_alumnos):
     """Carga y valida los datos cruzando ambos archivos Excel."""
-    ruta_fechas = r"c:\Users\oscar\Dropbox\Programas Python\Proyección de nuevos ingresos\Fechas Inscripcion y nacimiento.xlsx"
-    ruta_alumnos = r"c:\Users\oscar\Dropbox\Programas Python\Proyección de nuevos ingresos\Alumnos NI status 1er ciclo.xlsx"
-    
-    df_fechas = pd.read_excel(ruta_fechas)
-    df_alumnos = pd.read_excel(ruta_alumnos)
+    df_fechas = pd.read_excel(file_fechas)
+    df_alumnos = pd.read_excel(file_alumnos)
     
     # Limpiar y estandarizar valores de PAGO1 y PAGO2
     df_alumnos['PAGO1_clean'] = df_alumnos['PAGO1'].astype(str).str.lower().str.strip()
@@ -69,9 +66,18 @@ def convert_df_to_excel(df):
         df.to_excel(writer, index=False, sheet_name='Inscritos')
     return output.getvalue()
 
+# Carga de archivos
+st.sidebar.header("📁 Carga de Archivos")
+archivo_fechas = st.sidebar.file_uploader("Archivo 'Fechas Inscripcion'", type=['xlsx', 'xls'])
+archivo_alumnos = st.sidebar.file_uploader("Archivo 'Alumnos NI'", type=['xlsx', 'xls'])
+
+if archivo_fechas is None or archivo_alumnos is None:
+    st.info("👈 Por favor, sube ambos archivos de Excel en el menú lateral para comenzar el análisis.")
+    st.stop()
+
 # Cargar y validar datos
 with st.spinner("Validando registros con archivo de Alumnos NI..."):
-    df, removed_counts, alumnos_no_en_fechas = cargar_y_validar_datos()
+    df, removed_counts, alumnos_no_en_fechas = cargar_y_validar_datos(archivo_fechas, archivo_alumnos)
 
 # Sección de Validación
 with st.expander("📊 Resultados del Proceso de Validación de Registros", expanded=False):
