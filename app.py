@@ -27,13 +27,17 @@ def cargar_y_validar_datos(file_fechas, file_alumnos):
     df_fechas = pd.read_excel(file_fechas)
     df_alumnos = pd.read_excel(file_alumnos)
     
-    # Limpiar y estandarizar valores de PAGO1 y PAGO2
+    # Limpiar y estandarizar valores de GASTOS_ADM, PAGO1 y PAGO2
+    if 'GASTOS_ADM' in df_alumnos.columns:
+        df_alumnos['GASTOS_ADM_clean'] = df_alumnos['GASTOS_ADM'].astype(str).str.lower().str.strip()
+    else:
+        df_alumnos['GASTOS_ADM_clean'] = 'no'
     df_alumnos['PAGO1_clean'] = df_alumnos['PAGO1'].astype(str).str.lower().str.strip()
     df_alumnos['PAGO2_clean'] = df_alumnos['PAGO2'].astype(str).str.lower().str.strip()
     
-    # Filtrar Alumnos con PAGO1 o PAGO2 realizados ('si')
+    # Filtrar Alumnos con GASTOS_ADM, PAGO1 o PAGO2 realizados ('si')
     alumnos_pagados = df_alumnos[
-        (df_alumnos['PAGO1_clean'] == 'si') | (df_alumnos['PAGO2_clean'] == 'si')
+        (df_alumnos['GASTOS_ADM_clean'] == 'si') | (df_alumnos['PAGO1_clean'] == 'si') | (df_alumnos['PAGO2_clean'] == 'si')
     ]
     
     # Llave compuesta por MATRICULA y AREA para asegurar congruencia
@@ -81,7 +85,7 @@ with st.spinner("Validando registros con archivo de Alumnos NI..."):
 
 # Sección de Validación
 with st.expander("📊 Resultados del Proceso de Validación de Registros", expanded=False):
-    st.info("Se validó que los registros de 'Fechas Inscripcion y nacimiento' tengan PAGO1 o PAGO2 realizados en 'Alumnos NI status 1er ciclo' para la misma ÁREA.")
+    st.info("Se validó que los registros de 'Fechas Inscripcion y nacimiento' tengan GASTOS_ADM, PAGO1 o PAGO2 realizados en 'Alumnos NI status 1er ciclo' para la misma ÁREA.")
     
     col1, col2 = st.columns(2)
     
@@ -97,7 +101,7 @@ with st.expander("📊 Resultados del Proceso de Validación de Registros", expa
         st.write(f"Hubo {len(alumnos_no_en_fechas)} registros en 'Alumnos NI' que no se encontraron en 'Fechas Inscripcion'.")
         if not alumnos_no_en_fechas.empty:
             # Mostrar solo columnas relevantes para no saturar
-            cols_to_show = [col for col in ['MATRICULA', 'AREA', 'PAGO1', 'PAGO2', 'Status'] if col in alumnos_no_en_fechas.columns]
+            cols_to_show = [col for col in ['MATRICULA', 'AREA', 'GASTOS_ADM', 'PAGO1', 'PAGO2', 'Status'] if col in alumnos_no_en_fechas.columns]
             if not cols_to_show:
                 cols_to_show = alumnos_no_en_fechas.columns.tolist()
             st.dataframe(alumnos_no_en_fechas[cols_to_show], hide_index=True)
