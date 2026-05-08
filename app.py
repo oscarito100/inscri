@@ -142,6 +142,16 @@ else:
 # Información del área
 st.header(f"📚 {area_seleccionada}")
 
+if area_seleccionada != "TODAS":
+    excel_area = convert_df_to_excel(df_area[['MATRICULA', 'FECHA_INSC']])
+    st.download_button(
+        label="📥 Descargar Excel de Matrículas y Fechas",
+        data=excel_area,
+        file_name=f'Matriculas_Fechas_{area_seleccionada}.xlsx',
+        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        key="download_area_excel"
+    )
+
 col1, col2, col3 = st.columns(3)
 with col1:
     st.metric("Total Registros", f"{len(df_area):,}")
